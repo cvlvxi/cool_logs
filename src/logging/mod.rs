@@ -1,7 +1,7 @@
-use async_trait::async_trait;
 
-// 05-01 22:45:25.653  3361  3382 E MesonHwc: HwcVsync vsync callback fail (0xa9a21590)-(-22)-(0xa9a37010)
-// Date, Time, ProcessId, LogLevel, Prefix, Message
+mod adb;
+
+use async_trait::async_trait;
 
 #[derive(Debug)]
 struct LineParts<'LLT> {
@@ -21,8 +21,7 @@ pub trait LineParter  {
     fn parts<'LLT>(&self, line: &'LLT str) -> Option<LineParts<'LLT>>;
 }
 
-pub trait PartStrategy {
+pub trait LinePartStrategy {
     fn extract_parts<'LLT>(&self, line: &'LLT str) -> Option<LineParts<'LLT>>;
 }
 
-mod adb;
