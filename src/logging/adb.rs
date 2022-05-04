@@ -1,25 +1,25 @@
-use crate::logging::{Parser, LineParts, PartStrategy};
+use crate::logging::{Parser, LineParts, LineParter, PartStrategy};
 
 use std::marker::PhantomData;
 
 use async_trait::async_trait;
 use regex::Regex;
 
-// LLT = LineLifeTime
 
-struct Adb<'LLT, S: PartStrategy<'LLT>> {
-    strategy: S,
-    phantom: PhantomData<&'LLT ()>
+struct Adb<S: PartStrategy> {
+    strategy: S
 }
 
-impl<'LLT, S: PartStrategy<'LLT>> Adb<'LLT, S> {
+impl<S: PartStrategy> Adb<S> {
     fn new(strategy: S) -> Self {
         Self {
-            strategy,
-            phantom: PhantomData{}
+            strategy
         }
-    }
+    } 
 }
+
+// Adb::<AdbRegexStrategy>::new();
+
 
 // #[async_trait]
 // impl<'LLT, S:PartStrategy<'LLT>> Parser for Adb<'LLT, S> {
@@ -28,9 +28,8 @@ impl<'LLT, S: PartStrategy<'LLT>> Adb<'LLT, S> {
 //     }
 // }
 
-impl<'LLT, S: PartStrategy<'LLT>> LineParts<'LLT> for Adb<'LLT, S> {
-    type PartsType<'a> = AdbParts<'LLT>;
-    fn parts(&self, line: &str) -> Option<AdbParts<'LLT>>{
+impl<S: PartStrategy> LineParter for Adb<S> {
+    fn parts<'LLT>(&self, line: &'LLT str) -> Option<LineParts<'LLT>>{
         return self.strategy.extract_parts(line)
     }
 }
@@ -60,30 +59,20 @@ impl AdbRegexStrategy {
     }
 }
 
-impl<'LLT> PartStrategy<'LLT> for AdbRegexStrategy {
-    type PartsType<'a> = AdbParts<'LLT>;
-    fn extract_parts(&self, line: &'LLT str) -> Option<Self::PartsType<'LLT>> {
-        let capture = self.re_pattern.captures(line)?;
-        Some(AdbParts{
-            datetime: &capture["datetime"],
-            timestamp: &capture["timestamp"],
-            loglevel: &capture["loglevel"],
-            prefix: &capture["prefix"],
-            message: &capture["message"]
+impl PartStrategy for AdbRegexStrategy {
+    fn extract_parts<'LLT>(&self, line: &'LLT str) -> Option<LineParts<'LLT>> {
+        let capture = self.re_pattern.captures(&line)?;
+        Some(LineParts{
+            datetime: &capture.name("datetime").unwrap().as_str(),
+            timestamp: &capture.name("timestamp").unwrap().as_str(),
+            loglevel: &capture.name("loglevel").unwrap().as_str(),
+            prefix: &capture.name("prefix").unwrap().as_str(),
+            message: &capture.name("message").unwrap().as_str()
         })
     }
 }
 
 
-// 05-01 22:45:25.653  3361  3382 E MesonHwc: HwcVsync vsync callback fail (0xa9a21590)-(-22)-(0xa9a37010)
-// Date, Time, ProcessId, LogLevel, Prefix, Message 
-struct AdbParts<'LLT> {
-    pub datetime: &'LLT str,
-    pub timestamp: &'LLT str,
-    pub loglevel: &'LLT str,
-    pub prefix: &'LLT str,
-    pub message: &'LLT str 
-}
 
 #[test]
 fn test_regex() {
