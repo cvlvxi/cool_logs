@@ -5,18 +5,18 @@ use std::process::Stdio;
 use crate::logging::LinePartStrategy;
 
 use async_trait::async_trait;
-use tokio::process::ChildStdout;
-use tokio::{process::Command};
 use tokio::io::{AsyncBufReadExt, BufReader, Lines};
+use tokio::process::ChildStdout;
+use tokio::process::Command;
 use tokio_stream::wrappers::LinesStream;
 use tokio_stream::StreamExt;
 
 use super::Parser;
 
 struct Adb<S: LinePartStrategy> {
-    curr_line: Option<&str>,
     strategy: S,
-    reader: LinesStream<BufReader<ChildStdout>>
+    reader: LinesStream<BufReader<ChildStdout>>,
+    curr_line: Option<String>
 }
 
 impl<S: LinePartStrategy> Adb<S> {
@@ -26,32 +26,34 @@ impl<S: LinePartStrategy> Adb<S> {
             .stdout(Stdio::piped())
             .spawn()
             .expect("Couldn't open adb logcat");
-        
-            let stdout = child.stdout.take().expect("Couldn't get stdout");
-            let reader = LinesStream::new(BufReader::new(stdout).lines());
 
-            tokio::spawn(async move {
-                let status = child
-                    .wait().await
-                    .expect("Child process encountered an error");
+        let stdout = child.stdout.take().expect("Couldn't get stdout");
+        let reader = LinesStream::new(BufReader::new(stdout).lines());
 
-            });
+        tokio::spawn(async move {
+            let status = child
+                .wait()
+                .await
+                .expect("Child process encountered an error");
+        });
         Self {
             strategy,
             reader,
             curr_line: None
         }
-    } 
+    }
 }
 
 #[async_trait]
-impl<S: LinePartStrategy> Parser for Adb<S> {
-    
-    
+impl<S: LinePartStrategy + Send> Parser for Adb<S> {
+    type PartType<'a> where Self: 'a = S::PartType<'a>;
+    async fn next<'a>(&'a mut self) -> Option<Self::PartType<'a>> {
+        let line = self.reader.next().await?.unwrap();
+        self.curr_line = Some(line);
+        let parts = self.strategy.parts(&self.curr_line.as_ref().unwrap());
+        parts
+    }
 }
-
-
-
 
 #[tokio::test]
 async fn create_adb() {
@@ -67,9 +69,12 @@ async fn create_adb() {
     //     let line= adb.reader.next_line().await;
     //     println!("{:?}", line);
     // }
-    while let Some(something) = adb.reader.next().await {
-        println!("{:?}", something);
+    // while let Some(something) = adb.reader.next().await {
+    //     println!("{:?}", something);
+    // }
+
+    loop {
+
+        println!("{:?}", adb.next().await);
     }
-
-
 }

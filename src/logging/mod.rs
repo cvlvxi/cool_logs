@@ -15,8 +15,8 @@ pub struct LineParts<'LLT> {
 }
 #[async_trait]
 pub trait Parser {
-    type PartType<'a>;
-    async fn next2<'LLT>(&mut self, line: &'LLT str) -> Option<Self::PartType<'LLT>>;
+    type PartType<'a> where Self: 'a;
+    async fn next<'b>(&'b mut self) -> Option<Self::PartType<'b>>;
 }
 
 pub trait LinePartStrategy {
