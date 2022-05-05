@@ -10,12 +10,12 @@ const R_LOG_LEVEL: &str = r"(?P<loglevel>[A-Za-z]{1})";
 const R_PREFIX: &str = r"(?P<prefix>[A-Za-z]+)";
 const R_MSG: &str = r"(?P<message>.+)";
 
-struct AdbRegexStrategy {
+pub struct AdbRegexStrategy {
     pub re_pattern: &'static Regex
 }
 
 impl AdbRegexStrategy {
-    fn new() -> Self {
+    pub fn new() -> Self {
         lazy_static! {
             static ref RE: Regex = Regex::new(
                 format!(

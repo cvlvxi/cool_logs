@@ -3,8 +3,10 @@ mod adb;
 
 use async_trait::async_trait;
 
+use tokio_stream::wrappers::LinesStream;
+
 #[derive(Debug)]
-struct LineParts<'LLT> {
+pub struct LineParts<'LLT> {
     pub datetime: &'LLT str,
     pub timestamp: &'LLT str,
     pub loglevel: &'LLT str,
@@ -13,7 +15,8 @@ struct LineParts<'LLT> {
 }
 #[async_trait]
 pub trait Parser {
-    // async fn next(&mut self);
+    type PartType<'a>;
+    async fn next2<'LLT>(&mut self, line: &'LLT str) -> Option<Self::PartType<'LLT>>;
 }
 
 pub trait LinePartStrategy {

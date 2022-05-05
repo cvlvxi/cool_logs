@@ -10,4 +10,4 @@ regex = "1.5.5"
 tokio = { version = '1.18.1', features = ['full'] }
 async-trait = "0.1.53" 
 lazy_static = "1.4.0"
-
+tokio-stream = { version = "0.1.8", features = ['io-util'] }
