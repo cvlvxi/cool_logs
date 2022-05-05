@@ -16,12 +16,8 @@ pub trait Parser {
     // async fn next(&mut self);
 }
 
-pub trait LineParter  {
-    // fn parts<'LLT>(&self, line: &'LLT str) -> Option<LineParts<'LLT>>;
-    fn parts<'LLT>(&self, line: &'LLT str) -> Option<LineParts<'LLT>>;
-}
-
 pub trait LinePartStrategy {
-    fn extract_parts<'LLT>(&self, line: &'LLT str) -> Option<LineParts<'LLT>>;
+    type PartType<'a>;
+    fn parts<'LLT>(&self, line: &'LLT str) -> Option<Self::PartType<'LLT>>;
 }
 

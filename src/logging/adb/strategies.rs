@@ -31,7 +31,8 @@ impl AdbRegexStrategy {
 }
 
 impl LinePartStrategy for AdbRegexStrategy {
-    fn extract_parts<'LLT>(&self, line: &'LLT str) -> Option<LineParts<'LLT>> {
+    type PartType<'a> = LineParts<'a>;
+    fn parts<'LLT>(&self, line: &'LLT str) -> Option<Self::PartType<'LLT>> {
         let capture = self.re_pattern.captures(&line)?;
         Some(LineParts{
             datetime: &capture.name("datetime").unwrap().as_str(),
@@ -49,7 +50,7 @@ impl LinePartStrategy for AdbRegexStrategy {
 fn test_regex() {
     let some_line = "05-01 22:45:25.653  3361  3382 E MesonHwc: HwcVsync vsync callback fail (0xa9a21590)-(-22)-(0xa9a37010)";
     let strategy = AdbRegexStrategy::new();
-    println!("{:?}", strategy.extract_parts(some_line));
+    println!("{:?}", strategy.parts(some_line));
 }
 
 
