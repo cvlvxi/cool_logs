@@ -3,24 +3,27 @@ pub mod adb;
 
 use async_trait::async_trait;
 
-use tokio_stream::wrappers::LinesStream;
+use std::ops::Range;
 
 #[derive(Debug)]
-pub struct LineParts<'LLT> {
-    pub datetime: &'LLT str,
-    pub timestamp: &'LLT str,
-    pub loglevel: &'LLT str,
-    pub prefix: &'LLT str,
-    pub message: &'LLT str 
+pub struct LineParts {
+    pub curr_line: String,
+    pub datetime: Range<usize>,
+    pub timestamp: Range<usize>,
+    pub loglevel: Range<usize>,
+    pub prefix: Range<usize>,
+    pub message: Range<usize>
 }
+
+
 #[async_trait]
 pub trait Parser {
-    type PartType<'a> where Self: 'a;
-    async fn next<'b>(&'b mut self) -> Option<Self::PartType<'b>>;
+    type PartType;
+    async fn next(&mut self) -> Option<Self::PartType>;
 }
 
 pub trait LinePartStrategy {
-    type PartType<'a>;
-    fn parts<'LLT>(&self, line: &'LLT str) -> Option<Self::PartType<'LLT>>;
+    type PartType;
+    fn parts(&self, line: String) -> Option<Self::PartType>;
 }
 

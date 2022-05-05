@@ -16,7 +16,6 @@ use super::Parser;
 pub struct Adb<S: LinePartStrategy> {
     strategy: S,
     reader: LinesStream<BufReader<ChildStdout>>,
-    curr_line: Option<String>
 }
 
 impl<S: LinePartStrategy> Adb<S> {
@@ -38,20 +37,17 @@ impl<S: LinePartStrategy> Adb<S> {
         });
         Self {
             strategy,
-            reader,
-            curr_line: None
+            reader
         }
     }
 }
 
 #[async_trait]
 impl<S: LinePartStrategy + Send> Parser for Adb<S> {
-    type PartType<'a> where Self: 'a = S::PartType<'a>;
-    async fn next<'a>(&'a mut self) -> Option<Self::PartType<'a>> {
+    type PartType = S::PartType;
+    async fn next(&mut self) -> Option<Self::PartType> {
         let line = self.reader.next().await?.unwrap();
-        self.curr_line = Some(line);
-        let parts = self.strategy.parts(&self.curr_line.as_ref().unwrap());
-        parts
+        self.strategy.parts(line)
     }
 }
 

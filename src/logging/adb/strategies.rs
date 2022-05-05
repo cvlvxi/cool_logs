@@ -31,16 +31,19 @@ impl AdbRegexStrategy {
 }
 
 impl LinePartStrategy for AdbRegexStrategy {
-    type PartType<'a> = LineParts<'a>;
-    fn parts<'LLT>(&self, line: &'LLT str) -> Option<Self::PartType<'LLT>> {
+    type PartType = LineParts;
+    fn parts(&self, line: String) -> Option<Self::PartType> {
         let capture = self.re_pattern.captures(&line)?;
-        Some(LineParts{
-            datetime: &capture.name("datetime").unwrap().as_str(),
-            timestamp: &capture.name("timestamp").unwrap().as_str(),
-            loglevel: &capture.name("loglevel").unwrap().as_str(),
-            prefix: &capture.name("prefix").unwrap().as_str(),
-            message: &capture.name("message").unwrap().as_str()
-        })
+        let mut parts = LineParts{
+            curr_line: String::from(""),
+            datetime: capture.name("datetime").unwrap().range(),
+            timestamp: capture.name("timestamp").unwrap().range(),
+            loglevel: capture.name("loglevel").unwrap().range(),
+            prefix: capture.name("prefix").unwrap().range(),
+            message: capture.name("message").unwrap().range()
+        };
+        parts.curr_line = line; 
+        Some(parts)
     }
 }
 
@@ -50,7 +53,10 @@ impl LinePartStrategy for AdbRegexStrategy {
 fn test_regex() {
     let some_line = "05-01 22:45:25.653  3361  3382 E MesonHwc: HwcVsync vsync callback fail (0xa9a21590)-(-22)-(0xa9a37010)";
     let strategy = AdbRegexStrategy::new();
-    println!("{:?}", strategy.parts(some_line));
+    let parts = strategy.parts(String::from(some_line)).unwrap();
+    println!("datetime: {:?}", &parts.curr_line[parts.datetime]);
+    println!("timestamp: {:?}", &parts.curr_line[parts.timestamp]);
+    println!("message: {:?}", &parts.curr_line[parts.message]);
 }
 
 
