@@ -1,5 +1,5 @@
 
-mod adb;
+pub mod adb;
 
 use async_trait::async_trait;
 

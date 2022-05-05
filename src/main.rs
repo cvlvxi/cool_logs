@@ -2,60 +2,43 @@
 
 mod logging;
 
-
 use regex::Regex;
 use std::io::Read;
 use std::process::{Command, Stdio};
+use std::time::Duration;
 
-// format
-// 05-01 22:45:25.653  3361  3382 E MesonHwc: HwcVsync vsync callback fail (0xa9a21590)-(-22)-(0xa9a37010)
-// MM-DD HH:MM:SS PROCESS_ID PROCESS_ID LOG_LEVEL PREFIX: [MESSAGE]
+use tokio::time::sleep;
+
+use crate::logging::adb::Adb;
+use crate::logging::adb::strategies::AdbRegexStrategy;
+use crate::logging::Parser;
+
+async fn sleep_print(msg: &str) {
+    println!("{:?}", msg);
+    sleep(Duration::from_secs(1)).await;
+
+
+}
 
 #[tokio::main]
 async fn main() {
-    // let process = Command::new("adb")
-    //     .args(["logcat"])
-    //     .stdout(Stdio::piped())
-    //     .spawn();
-    // let child = process.unwrap();
-    // let mut stdout = child.stdout.unwrap();
+    let mut adb = Adb::new(AdbRegexStrategy::new());
+    
+    let a = tokio::spawn(async move {
+        loop {
+            sleep(Duration::from_secs(2)).await;
+            println!("From Logging: {:?}", adb.next().await);
 
-    // // Init buffer
-    // let buffer: Vec<&str> = vec![" "; 1024];
-    // let mut my_string = buffer.join("");
+        }
+    });
 
-    // let max_count = 1;
-    // let mut count = 0;
+    let b = tokio::spawn(async move {
+        loop {
+            sleep_print("Hello from other thing").await;
+        }
+    });
 
-    // let re_pattern = r"(\d{2}-\d{2})\s.*(\d{2}:\d{2}:\d{2}.\d{3}).*";
-    // let re = Regex::new(re_pattern).unwrap();
+    a.await;
 
-    // loop {
 
-    //     if count >= max_count {
-    //         break;
-    //    }
-
-    //     unsafe {
-    //         let res = stdout.read(my_string.as_bytes_mut());
-    //     }
-
-    //     let parts: Vec<&str> = my_string.split("\n").collect();
-
-    //     println!("{:?}", parts.len());
-    //     for i in parts {
-    //         println!("parts: {:?}", i);
-    //         for capture in re.captures_iter(i) {
-    //             re.captures
-    //             println!("MM-DD: {:?}: ", &capture[0]);
-    //             println!("HH: {:?}: ", &capture[0]);
-    //         }
-    //     }
-        
-        
-    //     count += 1;
-    // }
-
-    // println!("{:?}", process.stdout);
-    // println!("Hello, world!");
 }

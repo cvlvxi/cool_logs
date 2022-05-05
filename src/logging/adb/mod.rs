@@ -1,4 +1,4 @@
-mod strategies;
+pub mod strategies;
 
 use std::process::Stdio;
 
@@ -13,14 +13,14 @@ use tokio_stream::StreamExt;
 
 use super::Parser;
 
-struct Adb<S: LinePartStrategy> {
+pub struct Adb<S: LinePartStrategy> {
     strategy: S,
     reader: LinesStream<BufReader<ChildStdout>>,
     curr_line: Option<String>
 }
 
 impl<S: LinePartStrategy> Adb<S> {
-    fn new(strategy: S) -> Self {
+    pub fn new(strategy: S) -> Self {
         let mut child = Command::new("adb")
             .arg("logcat")
             .stdout(Stdio::piped())
@@ -74,7 +74,6 @@ async fn create_adb() {
     // }
 
     loop {
-
         println!("{:?}", adb.next().await);
     }
 }
