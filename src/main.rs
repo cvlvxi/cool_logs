@@ -73,17 +73,11 @@ async fn main() -> Result<()> {
     });
 
     let b = tokio::spawn(async move {
-        loop {
-            receive_logs(&mut rx).await;
-        }
+        start_ui(&mut rx).await;
     });
 
     let c = tokio::spawn(async move {
         io_handler(tx2).await;
-    });
-
-    let d = tokio::spawn(async move {
-        start_ui().await;
     });
 
     // a.await;

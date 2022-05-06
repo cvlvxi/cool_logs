@@ -1,6 +1,11 @@
 use std::{io::stdout, time::Duration};
 use eyre::Result;
+use tokio::sync::mpsc;
 use tui::{backend::{CrosstermBackend, Backend}, Terminal, Frame, layout::{Layout, Direction, Constraint, Alignment}, widgets::{Paragraph, Block, Borders, BorderType}, style::{Style, Color}, text::{Spans, Span}};
+use tui_logger::TuiLoggerWidget;
+use log::{debug, error, warn};
+
+use crate::logging::LineParts;
 
 
 
@@ -9,7 +14,7 @@ use tui::{backend::{CrosstermBackend, Backend}, Terminal, Frame, layout::{Layout
 //     Continue,
 // }
 
-pub async fn start_ui() -> Result<()> {
+pub async fn start_ui(log_rx: &mut mpsc::Receiver<LineParts>) -> Result<()> {
     let stdout = stdout();
     crossterm::terminal::enable_raw_mode();
     let backend = CrosstermBackend::new(stdout);
@@ -32,6 +37,10 @@ pub async fn start_ui() -> Result<()> {
         //     events.close();
         //     break;
         // }
+        if let Some(i) = log_rx.recv().await {
+            debug!("Got the line parts: {:?}", i);
+            debug!("{:?}", i);
+        }
     }
 
     // Restore the terminal and close application
@@ -78,8 +87,8 @@ where
     rect.render_widget(body, body_chunks[0]);
 
     // Logs
-    // let logs = draw_logs();
-    // rect.render_widget(logs, chunks[3]);
+    let logs = draw_logs();
+    rect.render_widget(logs, chunks[3]);
 }
 
 fn draw_title<'a>() -> Paragraph<'a> {
@@ -116,4 +125,20 @@ fn draw_body<'a>() -> Paragraph<'a> {
             .style(Style::default().fg(Color::White))
             .border_type(BorderType::Plain),
     )
+}
+
+fn draw_logs<'a>() -> TuiLoggerWidget<'a> {
+    TuiLoggerWidget::default()
+        .style_error(tui::style::Style::default().fg(Color::Red))
+        .style_debug(tui::style::Style::default().fg(Color::Green))
+        .style_warn(tui::style::Style::default().fg(Color::Yellow))
+        .style_trace(tui::style::Style::default().fg(Color::Gray))
+        .style_info(tui::style::Style::default().fg(Color::Blue))
+        .block(
+            Block::default()
+                .title("Logs")
+                .border_style(tui::style::Style::default().fg(Color::White).bg(Color::Black))
+                .borders(Borders::ALL),
+        )
+        .style(tui::style::Style::default().fg(Color::White).bg(Color::Black))
 }
