@@ -79,6 +79,7 @@ dependencies = [
  "crossterm 0.23.2",
  "eyre",
  "lazy_static",
+ "log",
  "regex",
  "tokio",
  "tokio-stream",
