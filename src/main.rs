@@ -8,10 +8,9 @@ use crate::logging::adb::Adb;
 use crate::logging::LineParts;
 use crate::logging::Parser;
 
-use tokio::io::AsyncReadExt;
 use tokio::sync::mpsc;
 use tokio::io::stdin;
-use tokio::io::{AsyncBufReadExt, BufReader, Lines};
+use tokio::io::{AsyncBufReadExt, BufReader};
 
 async fn receive_logs(rx: &mut mpsc::Receiver<LineParts>) {
     while let Some(i) = rx.recv().await {
